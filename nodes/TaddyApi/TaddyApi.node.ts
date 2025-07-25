@@ -3,6 +3,7 @@ import {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
+	NodeApiError,
 	NodeConnectionType,
 	NodeOperationError,
 	IHttpRequestMethods,
@@ -55,7 +56,10 @@ async function executeGraphQLQuery(context: IExecuteFunctions, query: string): P
 		if (response.errors) {
 			// Include the actual GraphQL errors in the error message
 			const errorDetails = response.errors.map((err: any) => err.message).join(', ');
-			throw new Error(`GraphQL Error: ${errorDetails}. Errors: ${JSON.stringify(response.errors)}. Query: ${query}`);
+			throw new NodeApiError(context.getNode(), {
+				message: `GraphQL Error: ${errorDetails}`,
+				description: `Errors: ${JSON.stringify(response.errors)}. Query: ${query}`,
+			});
 		}
 		
 		return response.data;
@@ -409,24 +413,24 @@ export class TaddyApi implements INodeType {
 				noDataExpression: true,
 				options: [
 					{
-						name: 'Search',
-						value: 'search',
+						name: 'Episode',
+						value: 'episode',
+					},
+					{
+						name: 'Latest Episode',
+						value: 'latest',
 					},
 					{
 						name: 'Podcast',
 						value: 'podcast',
 					},
 					{
-						name: 'Episode',
-						value: 'episode',
-					},
-					{
 						name: 'Popular Content',
 						value: 'popular',
 					},
 					{
-						name: 'Latest Episodes',
-						value: 'latest',
+						name: 'Search',
+						value: 'search',
 					},
 					{
 						name: 'Transcript',
@@ -576,7 +580,7 @@ export class TaddyApi implements INodeType {
 				},
 				default: '',
 				placeholder: 'Enter search term',
-				description: 'The term to search for across podcasts, episodes, comics, and creators. You can exclude terms by adding a minus sign (e.g., "Tim Ferriss -crypto")',
+				description: 'The term to search for across podcasts, episodes, comics, and creators. You can exclude terms by adding a minus sign (e.g., "Tim Ferriss -crypto").',
 			},
 			{
 				displayName: 'Exclude Terms',
@@ -590,7 +594,7 @@ export class TaddyApi implements INodeType {
 				},
 				default: '',
 				placeholder: 'crypto, bitcoin, investment',
-				description: 'Comma-separated list of terms to exclude from search results. These will be automatically added with minus signs to your search term',
+				description: 'Comma-separated list of terms to exclude from search results. These will be automatically added with minus signs to your search term.',
 			},
 			{
 				displayName: 'Content Types',
@@ -635,12 +639,12 @@ export class TaddyApi implements INodeType {
 				},
 				options: [
 					{
-						name: 'Popularity',
-						value: 'POPULARITY',
-					},
-					{
 						name: 'Exactness',
 						value: 'EXACTNESS',
+					},
+					{
+						name: 'Popularity',
+						value: 'POPULARITY',
 					},
 				],
 				default: 'POPULARITY',
@@ -658,16 +662,16 @@ export class TaddyApi implements INodeType {
 				},
 				options: [
 					{
-						name: 'Most Terms',
-						value: 'MOST_TERMS',
-					},
-					{
 						name: 'All Terms',
 						value: 'ALL_TERMS',
 					},
 					{
 						name: 'Exact Phrase',
 						value: 'EXACT_PHRASE',
+					},
+					{
+						name: 'Most Terms',
+						value: 'MOST_TERMS',
 					},
 				],
 				default: 'MOST_TERMS',
@@ -719,39 +723,19 @@ export class TaddyApi implements INodeType {
 				},
 				options: [
 					{
-						name: 'UUID',
-						value: 'uuid',
-						description: 'Unique identifier',
-					},
-					{
-						name: 'Name/Title',
-						value: 'name',
-						description: 'Name or title',
-					},
-					{
-						name: 'Description',
-						value: 'description',
-						description: 'Description or summary',
-					},
-					{
 						name: 'Audio URL',
 						value: 'audioUrl',
 						description: 'Audio file URL (episodes only)',
 					},
 					{
-						name: 'Web URL',
-						value: 'webUrl',
-						description: 'Web page URL (episodes only)',
-					},
-					{
-						name: 'Image URL',
-						value: 'imageUrl',
-						description: 'Cover art or image URL',
-					},
-					{
 						name: 'Date Published',
 						value: 'datePublished',
 						description: 'Publication date (episodes only)',
+					},
+					{
+						name: 'Description',
+						value: 'description',
+						description: 'Description or summary',
 					},
 					{
 						name: 'Duration',
@@ -764,29 +748,9 @@ export class TaddyApi implements INodeType {
 						description: 'Episode number (episodes only)',
 					},
 					{
-						name: 'Season Number',
-						value: 'seasonNumber',
-						description: 'Season number (episodes only)',
-					},
-					{
-						name: 'iTunes ID',
-						value: 'itunesId',
-						description: 'iTunes identifier (podcasts only)',
-					},
-					{
-						name: 'RSS URL',
-						value: 'rssUrl',
-						description: 'RSS feed URL (podcasts only)',
-					},
-					{
-						name: 'Website URL',
-						value: 'websiteUrl',
-						description: 'Official website (podcasts only)',
-					},
-					{
-						name: 'Language',
-						value: 'language',
-						description: 'Content language',
+						name: 'Has Chapters',
+						value: 'hasChapters',
+						description: 'Whether chapters are available (episodes only)',
 					},
 					{
 						name: 'Has Transcript',
@@ -794,9 +758,34 @@ export class TaddyApi implements INodeType {
 						description: 'Whether transcript is available',
 					},
 					{
-						name: 'Has Chapters',
-						value: 'hasChapters',
-						description: 'Whether chapters are available (episodes only)',
+						name: 'Image URL',
+						value: 'imageUrl',
+						description: 'Cover art or image URL',
+					},
+					{
+						name: 'iTunes ID',
+						value: 'itunesId',
+						description: 'ITunes identifier (podcasts only)',
+					},
+					{
+						name: 'Language',
+						value: 'language',
+						description: 'Content language',
+					},
+					{
+						name: 'Name/Title',
+						value: 'name',
+						description: 'Name or title',
+					},
+					{
+						name: 'Podcast Description (for Episodes)',
+						value: 'podcastDescription',
+						description: 'Include description of the podcast that the episode belongs to',
+					},
+					{
+						name: 'Podcast Image URL (for Episodes)',
+						value: 'podcastImageUrl',
+						description: 'Include cover art of the podcast that the episode belongs to',
 					},
 					{
 						name: 'Popularity Rank',
@@ -804,19 +793,34 @@ export class TaddyApi implements INodeType {
 						description: 'Popularity ranking',
 					},
 					{
+						name: 'RSS URL',
+						value: 'rssUrl',
+						description: 'RSS feed URL (podcasts only)',
+					},
+					{
+						name: 'Season Number',
+						value: 'seasonNumber',
+						description: 'Season number (episodes only)',
+					},
+					{
 						name: 'Total Episodes Count',
 						value: 'totalEpisodesCount',
 						description: 'Total number of episodes (podcasts only)',
 					},
 					{
-						name: 'Podcast Description (for episodes)',
-						value: 'podcastDescription',
-						description: 'Include description of the podcast that the episode belongs to',
+						name: 'UUID',
+						value: 'uuid',
+						description: 'Unique identifier',
 					},
 					{
-						name: 'Podcast Image URL (for episodes)',
-						value: 'podcastImageUrl',
-						description: 'Include cover art of the podcast that the episode belongs to',
+						name: 'Web URL',
+						value: 'webUrl',
+						description: 'Web page URL (episodes only)',
+					},
+					{
+						name: 'Website URL',
+						value: 'websiteUrl',
+						description: 'Official website (podcasts only)',
 					},
 				],
 				default: ['uuid', 'name', 'description'],
@@ -844,12 +848,24 @@ export class TaddyApi implements INodeType {
 						description: 'Filter by comma-separated ISO country codes (e.g., US,GB,CA)',
 					},
 					{
-						displayName: 'Languages',
-						name: 'filterForLanguages',
-						type: 'string',
+						displayName: 'Duration Greater Than (Seconds)',
+						name: 'filterForDurationGreaterThan',
+						type: 'number',
 						default: '',
-						placeholder: 'en,es,fr',
-						description: 'Filter by comma-separated language codes (e.g., en,es,fr)',
+						typeOptions: {
+							minValue: 1,
+						},
+						description: 'Filter for episodes longer than this duration in seconds',
+					},
+					{
+						displayName: 'Duration Less Than (Seconds)',
+						name: 'filterForDurationLessThan',
+						type: 'number',
+						default: '',
+						typeOptions: {
+							minValue: 1,
+						},
+						description: 'Filter for episodes shorter than this duration in seconds',
 					},
 					{
 						displayName: 'Genres',
@@ -860,43 +876,26 @@ export class TaddyApi implements INodeType {
 						description: 'Filter by comma-separated genres',
 					},
 					{
-						displayName: 'Podcast UUIDs',
-						name: 'filterForSeriesUuids',
+						displayName: 'Has Chapters',
+						name: 'filterForHasChapters',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to filter for episodes that have chapters',
+					},
+					{
+						displayName: 'Has Transcript',
+						name: 'filterForHasTranscript',
+						type: 'boolean',
+						default: false,
+						description: 'Whether to filter for content that has transcripts',
+					},
+					{
+						displayName: 'Languages',
+						name: 'filterForLanguages',
 						type: 'string',
 						default: '',
-						placeholder: 'uuid1,uuid2,uuid3',
-						description: 'Filter by comma-separated podcast UUIDs',
-					},
-					{
-						displayName: 'Podcast Content Type',
-						name: 'filterForPodcastContentType',
-						type: 'options',
-						options: [
-							{
-								name: 'Audio',
-								value: 'AUDIO',
-							},
-							{
-								name: 'Video',
-								value: 'VIDEO',
-							},
-						],
-						default: '',
-						description: 'Filter by audio or video content',
-					},
-					{
-						displayName: 'Published After',
-						name: 'filterForPublishedAfter',
-						type: 'dateTime',
-						default: '',
-						description: 'Filter for content published after this date',
-					},
-					{
-						displayName: 'Published Before',
-						name: 'filterForPublishedBefore',
-						type: 'dateTime',
-						default: '',
-						description: 'Filter for content published before this date',
+						placeholder: 'en,es,fr',
+						description: 'Filter by comma-separated language codes (e.g., en,es,fr)',
 					},
 					{
 						displayName: 'Last Updated After',
@@ -913,34 +912,50 @@ export class TaddyApi implements INodeType {
 						description: 'Filter for content last updated before this date',
 					},
 					{
-						displayName: 'Duration Less Than (seconds)',
-						name: 'filterForDurationLessThan',
-						type: 'number',
-						default: '',
-						typeOptions: {
-							minValue: 1,
-						},
-						description: 'Filter for episodes shorter than this duration in seconds',
+						displayName: 'Podcast Content Type',
+						name: 'filterForPodcastContentType',
+						type: 'options',
+						options: [
+							{
+								name: 'Audio',
+								value: 'AUDIO',
+							},
+							{
+								name: 'Video',
+								value: 'VIDEO',
+							},
+						],
+						default: 'AUDIO',
+						description: 'Filter by audio or video content',
 					},
 					{
-						displayName: 'Duration Greater Than (seconds)',
-						name: 'filterForDurationGreaterThan',
-						type: 'number',
+						displayName: 'Podcast UUIDs',
+						name: 'filterForSeriesUuids',
+						type: 'string',
 						default: '',
-						typeOptions: {
-							minValue: 1,
-						},
-						description: 'Filter for episodes longer than this duration in seconds',
+						placeholder: 'uuid1,uuid2,uuid3',
+						description: 'Filter by comma-separated podcast UUIDs',
 					},
 					{
-						displayName: 'Total Episodes Less Than',
-						name: 'filterForTotalEpisodesLessThan',
-						type: 'number',
+						displayName: 'Published After',
+						name: 'filterForPublishedAfter',
+						type: 'dateTime',
 						default: '',
-						typeOptions: {
-							minValue: 1,
-						},
-						description: 'Filter for podcasts with fewer than this many episodes',
+						description: 'Filter for content published after this date',
+					},
+					{
+						displayName: 'Published Before',
+						name: 'filterForPublishedBefore',
+						type: 'dateTime',
+						default: '',
+						description: 'Filter for content published before this date',
+					},
+					{
+						displayName: 'Safe Mode',
+						name: 'isSafeMode',
+						type: 'boolean',
+						default: true,
+						description: 'Whether to filter out explicit content',
 					},
 					{
 						displayName: 'Total Episodes Greater Than',
@@ -953,25 +968,14 @@ export class TaddyApi implements INodeType {
 						description: 'Filter for podcasts with more than this many episodes',
 					},
 					{
-						displayName: 'Has Transcript',
-						name: 'filterForHasTranscript',
-						type: 'boolean',
-						default: false,
-						description: 'Whether to filter for content that has transcripts',
-					},
-					{
-						displayName: 'Has Chapters',
-						name: 'filterForHasChapters',
-						type: 'boolean',
-						default: false,
-						description: 'Whether to filter for episodes that have chapters',
-					},
-					{
-						displayName: 'Safe Mode',
-						name: 'isSafeMode',
-						type: 'boolean',
-						default: true,
-						description: 'Whether to filter out explicit content',
+						displayName: 'Total Episodes Less Than',
+						name: 'filterForTotalEpisodesLessThan',
+						type: 'number',
+						default: '',
+						typeOptions: {
+							minValue: 1,
+						},
+						description: 'Filter for podcasts with fewer than this many episodes',
 					},
 				],
 			},
@@ -1108,9 +1112,9 @@ export class TaddyApi implements INodeType {
 					{ name: 'Business - Marketing', value: 'PODCASTSERIES_BUSINESS_MARKETING' },
 					{ name: 'Business - Non Profit', value: 'PODCASTSERIES_BUSINESS_NON_PROFIT' },
 					{ name: 'Comedy', value: 'PODCASTSERIES_COMEDY' },
-					{ name: 'Comedy - Interviews', value: 'PODCASTSERIES_COMEDY_INTERVIEWS' },
 					{ name: 'Comedy - Improv', value: 'PODCASTSERIES_COMEDY_IMPROV' },
-					{ name: 'Comedy - Stand-up', value: 'PODCASTSERIES_COMEDY_STANDUP' },
+					{ name: 'Comedy - Interviews', value: 'PODCASTSERIES_COMEDY_INTERVIEWS' },
+					{ name: 'Comedy - Stand-Up', value: 'PODCASTSERIES_COMEDY_STANDUP' },
 					{ name: 'Education', value: 'PODCASTSERIES_EDUCATION' },
 					{ name: 'Education - Courses', value: 'PODCASTSERIES_EDUCATION_COURSES' },
 					{ name: 'Education - How To', value: 'PODCASTSERIES_EDUCATION_HOW_TO' },
@@ -1121,7 +1125,6 @@ export class TaddyApi implements INodeType {
 					{ name: 'Fiction - Drama', value: 'PODCASTSERIES_FICTION_DRAMA' },
 					{ name: 'Fiction - Science Fiction', value: 'PODCASTSERIES_FICTION_SCIENCE_FICTION' },
 					{ name: 'Government', value: 'PODCASTSERIES_GOVERNMENT' },
-					{ name: 'History', value: 'PODCASTSERIES_HISTORY' },
 					{ name: 'Health and Fitness', value: 'PODCASTSERIES_HEALTH_AND_FITNESS' },
 					{ name: 'Health and Fitness - Alternative Health', value: 'PODCASTSERIES_HEALTH_AND_FITNESS_ALTERNATIVE_HEALTH' },
 					{ name: 'Health and Fitness - Fitness', value: 'PODCASTSERIES_HEALTH_AND_FITNESS_FITNESS' },
@@ -1129,6 +1132,7 @@ export class TaddyApi implements INodeType {
 					{ name: 'Health and Fitness - Mental Health', value: 'PODCASTSERIES_HEALTH_AND_FITNESS_MENTAL_HEALTH' },
 					{ name: 'Health and Fitness - Nutrition', value: 'PODCASTSERIES_HEALTH_AND_FITNESS_NUTRITION' },
 					{ name: 'Health and Fitness - Sexuality', value: 'PODCASTSERIES_HEALTH_AND_FITNESS_SEXUALITY' },
+					{ name: 'History', value: 'PODCASTSERIES_HISTORY' },
 					{ name: 'Kids and Family', value: 'PODCASTSERIES_KIDS_AND_FAMILY' },
 					{ name: 'Kids and Family - Education for Kids', value: 'PODCASTSERIES_KIDS_AND_FAMILY_EDUCATION_FOR_KIDS' },
 					{ name: 'Kids and Family - Parenting', value: 'PODCASTSERIES_KIDS_AND_FAMILY_PARENTING' },
@@ -1149,9 +1153,9 @@ export class TaddyApi implements INodeType {
 					{ name: 'Music - Interviews', value: 'PODCASTSERIES_MUSIC_INTERVIEWS' },
 					{ name: 'News', value: 'PODCASTSERIES_NEWS' },
 					{ name: 'News - Business', value: 'PODCASTSERIES_NEWS_BUSINESS' },
+					{ name: 'News - Commentary', value: 'PODCASTSERIES_NEWS_COMMENTARY' },
 					{ name: 'News - Daily News', value: 'PODCASTSERIES_NEWS_DAILY_NEWS' },
 					{ name: 'News - Entertainment', value: 'PODCASTSERIES_NEWS_ENTERTAINMENT' },
-					{ name: 'News - Commentary', value: 'PODCASTSERIES_NEWS_COMMENTARY' },
 					{ name: 'News - Politics', value: 'PODCASTSERIES_NEWS_POLITICS' },
 					{ name: 'News - Sports', value: 'PODCASTSERIES_NEWS_SPORTS' },
 					{ name: 'News - Tech', value: 'PODCASTSERIES_NEWS_TECH' },
@@ -1199,9 +1203,9 @@ export class TaddyApi implements INodeType {
 					{ name: 'True Crime', value: 'PODCASTSERIES_TRUE_CRIME' },
 					{ name: 'TV and Film', value: 'PODCASTSERIES_TV_AND_FILM' },
 					{ name: 'TV and Film - After Shows', value: 'PODCASTSERIES_TV_AND_FILM_AFTER_SHOWS' },
+					{ name: 'TV and Film - Film Reviews', value: 'PODCASTSERIES_TV_AND_FILM_FILM_REVIEWS' },
 					{ name: 'TV and Film - History', value: 'PODCASTSERIES_TV_AND_FILM_HISTORY' },
 					{ name: 'TV and Film - Interviews', value: 'PODCASTSERIES_TV_AND_FILM_INTERVIEWS' },
-					{ name: 'TV and Film - Film Reviews', value: 'PODCASTSERIES_TV_AND_FILM_FILM_REVIEWS' },
 					{ name: 'TV and Film - TV Reviews', value: 'PODCASTSERIES_TV_AND_FILM_TV_REVIEWS' },
 				],
 				description: 'Filter by genre (optional)',

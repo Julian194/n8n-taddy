@@ -97,14 +97,20 @@ The node uses n8n's dynamic UI system:
 - **Conditional Fields**: UI fields show/hide based on selected resource and operation
 - **Advanced Options**: Complex filters grouped in collapsible sections
 - **Input Validation**: Real-time validation with user-friendly error messages
+- **Field Selection**: Dynamic response field selection with content-type awareness
+- **Exclude Terms**: Dedicated UI field for excluding search terms
+- **Genre Dropdown**: 111 genre options for Popular Content filtering
+- **Language Support**: Automatic conversion of language codes to enum values (e.g., 'en' → 'ENGLISH')
 
 ## GraphQL API Specifics
 
 ### Query Construction
-- Search operations use `searchForTermInDatabaseWithFilterOptions` with 15+ filter parameters
+- Search operations use the new `search` endpoint (not the deprecated `searchForTermInDatabaseWithFilterOptions`)
+- Uses `matchBy` parameter instead of `matchType` for search matching
 - Individual lookups use specific queries (`getPodcastSeries`, `getEpisode`, etc.)
 - Popular content uses `getPopularContent` with language/genre enum filters
 - Latest episodes use `getLatestEpisodes` with podcast UUID or RSS URL arrays
+- Includes `responseDetails` for pagination metadata (pagesCount, totalCount)
 
 ### Authentication
 The API requires two headers:
@@ -113,13 +119,18 @@ The API requires two headers:
 These are configured in the credentials file and applied automatically.
 
 ### Response Processing
-All responses are normalized to a common `ProcessedResult` interface with:
-- `type`: Content type (podcast/episode/comic/creator)
-- `uuid`: Unique identifier
-- `name` and `description`: Basic metadata
-- `searchId`: For search operations
-- `metadata`: Operation-specific metadata
-- Additional type-specific fields preserved as-is
+Search responses return an array where:
+- **First item**: Search metadata with `_type: 'search_metadata'` containing:
+  - `searchId`: Unique search identifier
+  - `totalCount`: Total number of results
+  - `pagesCount`: Total number of pages
+  - `responseId`: Response details identifier
+- **Subsequent items**: Individual results (episodes, podcasts, etc.) with:
+  - `type`: Content type (podcast/episode/comic/creator)
+  - `uuid`: Unique identifier
+  - `name` and `description`: Basic metadata
+  - Additional type-specific fields preserved as-is
+  - Episodes include `podcastSeries` information by default (uuid, name)
 
 ## Development Notes
 
@@ -143,7 +154,31 @@ All responses are normalized to a common `ProcessedResult` interface with:
 - `docs/github-issue.md`: Original requirements specification
 - `docs/taddy-api-docs.md`: Complete Taddy API documentation
 - `docs/testing.md`: Testing procedures
+- `docs/testing-guide.md`: Comprehensive testing guide for production readiness
 - `docs/programmatic-style-node.md`: n8n node development guide
+
+## Key Features
+
+### Search Features
+- **Field Selection**: Choose which fields to include in response (uuid, name, description, audioUrl, etc.)
+- **Exclude Terms**: Dedicated field for excluding terms from search results
+- **Advanced Filtering**: Language, date, country, genre, duration, and more
+- **Pagination Support**: Access totalCount and pagesCount in search metadata
+- **Episode Context**: Episodes automatically include podcast series information
+
+### Language Support
+The node automatically converts common language codes to Taddy API enums:
+- `en` → `ENGLISH`
+- `es` → `SPANISH`
+- `fr` → `FRENCH`
+- `de` → `GERMAN`
+- And 50+ more languages
+
+### Date Handling
+All date filters are automatically converted to epoch timestamps as required by the API.
+
+### Response Structure
+Search results return pagination metadata as the first array item, followed by individual results.
 
 ## Common Issues and Solutions
 
@@ -157,6 +192,9 @@ All responses are normalized to a common `ProcessedResult` interface with:
 - Check query syntax in `utils/graphqlQueries.ts`
 - Use error logging to inspect actual queries being sent
 - Ensure enum values match Taddy API specification (e.g., `ENGLISH` not `"en"`)
+- Date filters must use epoch timestamps (not ISO strings)
+- Language filters must be enum values, not arrays when single value
+- The API uses `responseDetails` array for metadata, not top-level fields
 
 ### Build Failures
 - Ensure all imports are correct
