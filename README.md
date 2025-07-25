@@ -1,48 +1,123 @@
-![Banner image](https://user-images.githubusercontent.com/10284570/173569848-c624317f-42b1-45a6-ab09-f0ea3c247648.png)
+# n8n-nodes-taddy
 
-# n8n-nodes-starter
+This is an n8n community node. It lets you use the Taddy Podcast API in your n8n workflows.
 
-This repo contains example nodes to help you get started building your own custom integrations for [n8n](https://n8n.io). It includes the node linter and other dependencies.
+Taddy provides access to over 4 million podcasts and 180+ million episodes through a comprehensive GraphQL API. Search for podcast content, get detailed podcast and episode information, discover popular content, find latest episodes, and access transcripts.
 
-To make your custom node available to the community, you must create it as an npm package, and [submit it to the npm registry](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry).
+[n8n](https://n8n.io/) is a [fair-code licensed](https://docs.n8n.io/reference/license/) workflow automation platform.
 
-If you would like your node to be available on n8n cloud you can also [submit your node for verification](https://docs.n8n.io/integrations/creating-nodes/deploy/submit-community-nodes/).
+[Installation](#installation)  
+[Operations](#operations)  
+[Credentials](#credentials)  
+[Compatibility](#compatibility)  
+[Usage](#usage)  
+[Resources](#resources)
 
-## Prerequisites
+## Installation
 
-You need the following installed on your development machine:
+Follow the [installation guide](https://docs.n8n.io/integrations/community-nodes/installation/) in the n8n community nodes documentation.
 
-* [git](https://git-scm.com/downloads)
-* Node.js and npm. Minimum version Node 20. You can find instructions on how to install both using nvm (Node Version Manager) for Linux, Mac, and WSL [here](https://github.com/nvm-sh/nvm). For Windows users, refer to Microsoft's guide to [Install NodeJS on Windows](https://docs.microsoft.com/en-us/windows/dev-environment/javascript/nodejs-on-windows).
-* Install n8n with:
-  ```
-  npm install n8n -g
-  ```
-* Recommended: follow n8n's guide to [set up your development environment](https://docs.n8n.io/integrations/creating-nodes/build/node-development-environment/).
+Community package name: `n8n-nodes-taddy`
 
-## Using this starter
+## Operations
 
-These are the basic steps for working with the starter. For detailed guidance on creating and publishing nodes, refer to the [documentation](https://docs.n8n.io/integrations/creating-nodes/).
+### Search Content
+- **Full-text search** across podcasts and episodes with advanced filtering
+- **Field selection** - Choose which data fields to include in results
+- **Content type filtering** - Search podcasts, episodes, or both
+- **Advanced filters** - Language, country, genre, date ranges, duration, and more
+- **Exclude terms** - Exclude specific terms from search results
+- **Sorting options** - Sort by popularity or exactness
+- **Match types** - Exact phrase, all terms, or most terms matching
 
-1. [Generate a new repository](https://github.com/n8n-io/n8n-nodes-starter/generate) from this template repository.
-2. Clone your new repo:
-   ```
-   git clone https://github.com/<your organization>/<your-repo-name>.git
-   ```
-3. Run `npm i` to install dependencies.
-4. Open the project in your editor.
-5. Browse the examples in `/nodes` and `/credentials`. Modify the examples, or replace them with your own nodes.
-6. Update the `package.json` to match your details.
-7. Run `npm run lint` to check for errors or `npm run lintfix` to automatically fix errors when possible.
-8. Test your node locally. Refer to [Run your node locally](https://docs.n8n.io/integrations/creating-nodes/test/run-node-locally/) for guidance.
-9. Replace this README with documentation for your node. Use the [README_TEMPLATE](README_TEMPLATE.md) to get started.
-10. Update the LICENSE file to use your details.
-11. [Publish](https://docs.npmjs.com/packages-and-modules/contributing-packages-to-the-registry) your package to npm.
+### Podcast Details
+- Get detailed podcast information by UUID, name, iTunes ID, or RSS URL
+- Includes episode list, metadata, genres, and statistics
 
-## More information
+### Episode Details
+- Get detailed episode information by UUID, GUID, or name
+- Includes podcast series information, transcript data, and chapters
 
-Refer to our [documentation on creating nodes](https://docs.n8n.io/integrations/creating-nodes/) for detailed information on building your own nodes.
+### Popular Content
+- Discover trending podcasts with optional language and genre filtering
+- Pagination support for browsing popular content
 
-## License
+### Latest Episodes
+- Get recent episodes from specific podcasts or RSS feeds
+- Filter by podcast UUIDs or RSS URLs with pagination
 
-[MIT](https://github.com/n8n-io/n8n-nodes-starter/blob/master/LICENSE.md)
+### Transcript
+- Retrieve episode transcripts in multiple formats (text, SRT, VTT, JSON)
+- Support for on-demand transcript generation
+
+## Credentials
+
+To use this node, you need to authenticate with the Taddy API:
+
+### Prerequisites
+1. Sign up for a Taddy API account at [taddy.org](https://taddy.org)
+2. Obtain your API credentials from the Taddy dashboard
+
+### Setting up credentials in n8n
+1. In n8n, go to **Settings** > **Credentials**
+2. Click **Create New** and search for "Taddy API"
+3. Enter your credentials:
+   - **X-USER-ID**: Your Taddy user identifier
+   - **X-API-KEY**: Your Taddy API key
+4. Test the connection and save
+
+### Authentication Method
+The node uses header-based authentication, automatically adding the required `X-USER-ID` and `X-API-KEY` headers to all API requests.
+
+## Compatibility
+
+- **Minimum n8n version**: 0.174.0
+- **Tested with**: n8n 0.174.0 - 1.0.0+
+- **Node.js version**: 16+ (matches n8n requirements)
+
+This node follows n8n community node standards and should be compatible with all modern n8n versions.
+
+## Usage
+
+### Basic Search Example
+1. Add the Taddy API node to your workflow
+2. Select **Search Content** operation
+3. Enter a search term (e.g., "technology podcasts")
+4. Configure optional filters like language or date range
+5. Choose which fields to include in the response
+6. Execute to get search results with metadata
+
+### Working with Results
+- **Search results** include pagination metadata as the first item for easy access to `totalCount` and `pagesCount`
+- **Episode results** automatically include podcast series information (name, UUID) by default
+- **Field selection** is content-type aware - episode-only fields are filtered out for podcast searches
+
+### Advanced Features
+- **Exclude terms**: Use the dedicated "Exclude Terms" field to filter out unwanted content
+- **Response fields**: Select only the data fields you need to optimize response size
+- **Pagination**: Use the metadata from search results to implement pagination workflows
+- **Date filtering**: Supports precise date ranges with automatic epoch timestamp conversion
+
+### Common Workflows
+- **Content Discovery**: Search → Filter → Extract podcast information for subscriptions
+- **Content Analysis**: Search with transcripts → Get transcript → Analyze content
+- **Monitoring**: Search for specific topics → Check for new episodes → Send notifications
+
+## Resources
+
+* [n8n community nodes documentation](https://docs.n8n.io/integrations/#community-nodes)
+* [Taddy API Documentation](https://taddy.org) - Official API documentation and guides
+* [GraphQL API Reference](https://taddy.org/developers/graphql) - Complete API schema and examples
+* [Node Testing Guide](./docs/testing-guide.md) - Comprehensive testing procedures for this node
+
+## Version History
+
+### 0.1.0 (Initial Release)
+- Full Taddy API integration with 6 resource types
+- Advanced search with field selection and filtering
+- Podcast and episode detail operations
+- Popular content discovery
+- Latest episodes retrieval
+- Transcript access with multiple formats
+- Comprehensive error handling and validation
+- Production-ready with extensive testing coverage
