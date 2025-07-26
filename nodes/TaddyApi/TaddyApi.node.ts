@@ -289,70 +289,27 @@ async function executeGetPopularContent(this: IExecuteFunctions, itemIndex: numb
 }
 
 async function executeGetLatestEpisodes(this: IExecuteFunctions, itemIndex: number): Promise<any[]> {
-	const filterType = this.getNodeParameter('latestFilterType', itemIndex) as string;
-	const page = this.getNodeParameter('latestPage', itemIndex) as number;
-	const limitPerPage = this.getNodeParameter('latestLimitPerPage', itemIndex) as number;
-
-	// Validate pagination
-	const { page: validPage, limitPerPage: validLimit } = validatePaginationParams(page, limitPerPage);
-
-	let podcastUuids: string[] | undefined;
-	let rssUrls: string[] | undefined;
-
-	if (filterType === 'uuids') {
-		const uuidsString = this.getNodeParameter('latestPodcastUuids', itemIndex) as string;
-		if (!uuidsString) {
-			throw new NodeOperationError(this.getNode(), 'Podcast UUIDs are required when filter type is "uuids"', {
-				itemIndex,
-			});
-		}
-		
-		podcastUuids = uuidsString.split(',').map(uuid => uuid.trim());
-		
-		// Validate UUIDs
-		for (const uuid of podcastUuids) {
-			if (!validateUuid(uuid)) {
-				throw new NodeOperationError(this.getNode(), `Invalid UUID format: ${uuid}`, {
-					itemIndex,
-				});
-			}
-		}
-
-		// Check max limit
-		if (podcastUuids.length > 1000) {
-			throw new NodeOperationError(this.getNode(), 'Maximum 1000 podcast UUIDs allowed', {
-				itemIndex,
-			});
-		}
-	} else if (filterType === 'rssUrls') {
-		const urlsString = this.getNodeParameter('latestRssUrls', itemIndex) as string;
-		if (!urlsString) {
-			throw new NodeOperationError(this.getNode(), 'RSS URLs are required when filter type is "rssUrls"', {
-				itemIndex,
-			});
-		}
-		
-		rssUrls = urlsString.split(',').map(url => url.trim());
-		
-		// Validate URLs
-		for (const url of rssUrls) {
-			if (!validateUrl(url)) {
-				throw new NodeOperationError(this.getNode(), `Invalid RSS URL format: ${url}`, {
-					itemIndex,
-				});
-			}
-		}
-
-		// Check max limit
-		if (rssUrls.length > 1000) {
-			throw new NodeOperationError(this.getNode(), 'Maximum 1000 RSS URLs allowed', {
+	const uuidsString = this.getNodeParameter('latestPodcastUuids', itemIndex) as string;
+	
+	if (!uuidsString) {
+		throw new NodeOperationError(this.getNode(), 'Podcast UUIDs are required', {
+			itemIndex,
+		});
+	}
+	
+	const podcastUuids = uuidsString.split(',').map(uuid => uuid.trim());
+	
+	// Validate UUIDs
+	for (const uuid of podcastUuids) {
+		if (!validateUuid(uuid)) {
+			throw new NodeOperationError(this.getNode(), `Invalid UUID format: ${uuid}`, {
 				itemIndex,
 			});
 		}
 	}
 
 	// Build and execute query
-	const query = buildGetLatestEpisodesQuery(podcastUuids, rssUrls, validPage, validLimit);
+	const query = buildGetLatestEpisodesQuery(podcastUuids);
 	const data = await executeGraphQLQuery(this, query);
 
 	// Process and return results
@@ -1360,7 +1317,7 @@ export class TaddyApi implements INodeType {
 					{
 						name: 'iTunes ID',
 						value: 'itunesId',
-						description: 'iTunes identifier',
+						description: 'ITunes identifier',
 					},
 					{
 						name: 'Language',
@@ -1398,95 +1355,19 @@ export class TaddyApi implements INodeType {
 			},
 			// Latest Episodes Parameters
 			{
-				displayName: 'Filter Type',
-				name: 'latestFilterType',
-				type: 'options',
-				displayOptions: {
-					show: {
-						resource: ['latest'],
-						operation: ['getLatest'],
-					},
-				},
-				options: [
-					{
-						name: 'All Podcasts',
-						value: 'all',
-					},
-					{
-						name: 'Specific Podcast UUIDs',
-						value: 'uuids',
-					},
-					{
-						name: 'Specific RSS URLs',
-						value: 'rssUrls',
-					},
-				],
-				default: 'all',
-				description: 'How to filter the latest episodes',
-			},
-			{
 				displayName: 'Podcast UUIDs',
 				name: 'latestPodcastUuids',
 				type: 'string',
+				required: true,
 				displayOptions: {
 					show: {
 						resource: ['latest'],
 						operation: ['getLatest'],
-						latestFilterType: ['uuids'],
 					},
 				},
 				default: '',
 				placeholder: 'uuid1,uuid2,uuid3',
-				description: 'Comma-separated list of podcast UUIDs (max 1000)',
-			},
-			{
-				displayName: 'RSS URLs',
-				name: 'latestRssUrls',
-				type: 'string',
-				displayOptions: {
-					show: {
-						resource: ['latest'],
-						operation: ['getLatest'],
-						latestFilterType: ['rssUrls'],
-					},
-				},
-				default: '',
-				placeholder: 'https://feed1.com,https://feed2.com',
-				description: 'Comma-separated list of RSS URLs (max 1000)',
-			},
-			{
-				displayName: 'Page',
-				name: 'latestPage',
-				type: 'number',
-				displayOptions: {
-					show: {
-						resource: ['latest'],
-						operation: ['getLatest'],
-					},
-				},
-				default: 1,
-				typeOptions: {
-					minValue: 1,
-					maxValue: 20,
-				},
-				description: 'Page number (1-20)',
-			},
-			{
-				displayName: 'Results Per Page',
-				name: 'latestLimitPerPage',
-				type: 'number',
-				displayOptions: {
-					show: {
-						resource: ['latest'],
-						operation: ['getLatest'],
-					},
-				},
-				default: 10,
-				typeOptions: {
-					minValue: 1,
-					maxValue: 25,
-				},
-				description: 'Number of results per page (1-25)',
+				description: 'Comma-separated list of podcast UUIDs to get latest episodes from',
 			},
 			// Transcript Parameters
 			{
@@ -1715,6 +1596,7 @@ export class TaddyApi implements INodeType {
 					{ name: 'Niger', value: 'NIGER' },
 					{ name: 'Nigeria', value: 'NIGERIA' },
 					{ name: 'Niue', value: 'NIUE' },
+					{ name: 'None', value: '' },
 					{ name: 'Norfolk Island', value: 'NORFOLK_ISLAND' },
 					{ name: 'North Macedonia', value: 'NORTH_MACEDONIA' },
 					{ name: 'Northern Mariana Islands', value: 'NORTHERN_MARIANA_ISLANDS' },
@@ -1722,7 +1604,7 @@ export class TaddyApi implements INodeType {
 					{ name: 'Oman', value: 'OMAN' },
 					{ name: 'Pakistan', value: 'PAKISTAN' },
 					{ name: 'Palau', value: 'PALAU' },
-					{ name: 'Palestine, State of', value: 'PALESTINE_STATE' },
+					{ name: 'Palestine, State Of', value: 'PALESTINE_STATE' },
 					{ name: 'Panama', value: 'PANAMA' },
 					{ name: 'Papua New Guinea', value: 'PAPUA_NEW_GUINEA' },
 					{ name: 'Paraguay', value: 'PARAGUAY' },
@@ -1738,10 +1620,10 @@ export class TaddyApi implements INodeType {
 					{ name: 'Russia', value: 'RUSSIA' },
 					{ name: 'Rwanda', value: 'RWANDA' },
 					{ name: 'Saint Barthélemy', value: 'SAINT_BARTHELEMY' },
-					{ name: 'Saint Helena, Ascension and Tristan da Cunha', value: 'SAINT_HELENA_ASCENSION_AND_TRISTAN_DA_CUNHA' },
+					{ name: 'Saint Helena, Ascension and Tristan Da Cunha', value: 'SAINT_HELENA_ASCENSION_AND_TRISTAN_DA_CUNHA' },
 					{ name: 'Saint Kitts and Nevis', value: 'SAINT_KITTS_AND_NEVIS' },
 					{ name: 'Saint Lucia', value: 'SAINT_LUCIA' },
-					{ name: 'Saint Martin (French part)', value: 'SAINT_MARTIN_FRENCH_PART' },
+					{ name: 'Saint Martin (French Part)', value: 'SAINT_MARTIN_FRENCH_PART' },
 					{ name: 'Saint Pierre and Miquelon', value: 'SAINT_PIERRE_AND_MIQUELON' },
 					{ name: 'Saint Vincent and the Grenadines', value: 'SAINT_VINCENT_AND_THE_GRENADINES' },
 					{ name: 'Samoa', value: 'SAMOA' },
@@ -1753,7 +1635,7 @@ export class TaddyApi implements INodeType {
 					{ name: 'Seychelles', value: 'SEYCHELLES' },
 					{ name: 'Sierra Leone', value: 'SIERRA_LEONE' },
 					{ name: 'Singapore', value: 'SINGAPORE' },
-					{ name: 'Sint Maarten (Dutch part)', value: 'SINT_MAARTEN_DUTCH_PART' },
+					{ name: 'Sint Maarten (Dutch Part)', value: 'SINT_MAARTEN_DUTCH_PART' },
 					{ name: 'Slovakia', value: 'SLOVAKIA' },
 					{ name: 'Slovenia', value: 'SLOVENIA' },
 					{ name: 'Solomon Islands', value: 'SOLOMON_ISLANDS' },
@@ -1940,7 +1822,6 @@ export class TaddyApi implements INodeType {
 					},
 				},
 				options: [
-					{ name: 'None', value: '' },
 					{ name: 'Afghanistan', value: 'AFGHANISTAN' },
 					{ name: 'Åland Islands', value: 'ALAND_ISLANDS' },
 					{ name: 'Albania', value: 'ALBANIA' },
@@ -2105,6 +1986,7 @@ export class TaddyApi implements INodeType {
 					{ name: 'Niger', value: 'NIGER' },
 					{ name: 'Nigeria', value: 'NIGERIA' },
 					{ name: 'Niue', value: 'NIUE' },
+					{ name: 'None', value: '' },
 					{ name: 'Norfolk Island', value: 'NORFOLK_ISLAND' },
 					{ name: 'North Macedonia', value: 'NORTH_MACEDONIA' },
 					{ name: 'Northern Mariana Islands', value: 'NORTHERN_MARIANA_ISLANDS' },
@@ -2112,7 +1994,7 @@ export class TaddyApi implements INodeType {
 					{ name: 'Oman', value: 'OMAN' },
 					{ name: 'Pakistan', value: 'PAKISTAN' },
 					{ name: 'Palau', value: 'PALAU' },
-					{ name: 'Palestine, State of', value: 'PALESTINE_STATE' },
+					{ name: 'Palestine, State Of', value: 'PALESTINE_STATE' },
 					{ name: 'Panama', value: 'PANAMA' },
 					{ name: 'Papua New Guinea', value: 'PAPUA_NEW_GUINEA' },
 					{ name: 'Paraguay', value: 'PARAGUAY' },
@@ -2128,10 +2010,10 @@ export class TaddyApi implements INodeType {
 					{ name: 'Russia', value: 'RUSSIA' },
 					{ name: 'Rwanda', value: 'RWANDA' },
 					{ name: 'Saint Barthélemy', value: 'SAINT_BARTHELEMY' },
-					{ name: 'Saint Helena, Ascension and Tristan da Cunha', value: 'SAINT_HELENA_ASCENSION_AND_TRISTAN_DA_CUNHA' },
+					{ name: 'Saint Helena, Ascension and Tristan Da Cunha', value: 'SAINT_HELENA_ASCENSION_AND_TRISTAN_DA_CUNHA' },
 					{ name: 'Saint Kitts and Nevis', value: 'SAINT_KITTS_AND_NEVIS' },
 					{ name: 'Saint Lucia', value: 'SAINT_LUCIA' },
-					{ name: 'Saint Martin (French part)', value: 'SAINT_MARTIN_FRENCH_PART' },
+					{ name: 'Saint Martin (French Part)', value: 'SAINT_MARTIN_FRENCH_PART' },
 					{ name: 'Saint Pierre and Miquelon', value: 'SAINT_PIERRE_AND_MIQUELON' },
 					{ name: 'Saint Vincent and the Grenadines', value: 'SAINT_VINCENT_AND_THE_GRENADINES' },
 					{ name: 'Samoa', value: 'SAMOA' },
@@ -2143,7 +2025,7 @@ export class TaddyApi implements INodeType {
 					{ name: 'Seychelles', value: 'SEYCHELLES' },
 					{ name: 'Sierra Leone', value: 'SIERRA_LEONE' },
 					{ name: 'Singapore', value: 'SINGAPORE' },
-					{ name: 'Sint Maarten (Dutch part)', value: 'SINT_MAARTEN_DUTCH_PART' },
+					{ name: 'Sint Maarten (Dutch Part)', value: 'SINT_MAARTEN_DUTCH_PART' },
 					{ name: 'Slovakia', value: 'SLOVAKIA' },
 					{ name: 'Slovenia', value: 'SLOVENIA' },
 					{ name: 'Solomon Islands', value: 'SOLOMON_ISLANDS' },

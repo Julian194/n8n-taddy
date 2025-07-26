@@ -334,34 +334,26 @@ export function buildGetPopularContentQuery(language?: string, genres?: string[]
 }
 
 export function buildGetLatestEpisodesQuery(podcastUuids?: string[], rssUrls?: string[], page = 1, limitPerPage = 10): string {
-	const podcastUuidsArg = podcastUuids?.length ? `podcastUuids: [${podcastUuids.map(uuid => `"${uuid}"`).join(', ')}]` : '';
-	const rssUrlsArg = rssUrls?.length ? `rssUrls: [${rssUrls.map(url => `"${url}"`).join(', ')}]` : '';
-	const args = [podcastUuidsArg, rssUrlsArg, `page: ${page}`, `limitPerPage: ${limitPerPage}`]
+	const uuidsArg = podcastUuids?.length ? `uuids: [${podcastUuids.map(uuid => `"${uuid}"`).join(', ')}]` : '';
+	const args = [uuidsArg]
 		.filter(arg => arg !== '')
 		.join(', ');
 	
 	return `
 		query {
-			getLatestEpisodes(${args}) {
-				pagesCount
-				totalCount
-				podcastEpisodes {
+			getLatestPodcastEpisodes(${args}) {
+				uuid
+				name
+				description
+				audioUrl
+				datePublished
+				duration
+				episodeNumber
+				seasonNumber
+				podcastSeries {
 					uuid
 					name
-					description
-					audioUrl
-					webUrl
-					datePublished
-					duration
-					episodeNumber
-					seasonNumber
-					hasTranscript
-					hasChapters
-					podcastSeries {
-						uuid
-						name
-						imageUrl
-					}
+					imageUrl
 				}
 			}
 		}

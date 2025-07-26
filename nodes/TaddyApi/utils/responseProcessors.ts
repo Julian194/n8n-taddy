@@ -154,23 +154,18 @@ export function processPopularContentResults(data: any): ProcessedResult[] {
 
 export function processLatestEpisodesResults(data: any): ProcessedResult[] {
 	const results: ProcessedResult[] = [];
-	const latestData = data.getLatestEpisodes;
+	const latestData = data.getLatestPodcastEpisodes;
 	
 	if (!latestData) return results;
 	
-	const metadata = {
-		totalCount: latestData.totalCount,
-		pagesCount: latestData.pagesCount,
-	};
-	
-	if (latestData.podcastEpisodes) {
-		latestData.podcastEpisodes.forEach((episode: any) => {
+	// getLatestPodcastEpisodes returns episodes directly as an array
+	if (Array.isArray(latestData)) {
+		latestData.forEach((episode: any) => {
 			results.push({
 				type: 'episode',
 				uuid: episode.uuid,
 				name: episode.name,
 				description: episode.description,
-				metadata,
 				...episode,
 			});
 		});
