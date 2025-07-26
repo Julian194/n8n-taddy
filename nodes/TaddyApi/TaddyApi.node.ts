@@ -43,6 +43,7 @@ import {
 	sanitizeSearchTerm,
 } from './utils/validators';
 
+
 async function executeGraphQLQuery(context: IExecuteFunctions, query: string): Promise<any> {
 	const options = {
 		method: 'POST' as IHttpRequestMethods,
@@ -200,6 +201,9 @@ async function executeSearchContent(this: IExecuteFunctions, itemIndex: number):
 async function executeGetPodcastDetails(this: IExecuteFunctions, itemIndex: number): Promise<any> {
 	const identifierType = this.getNodeParameter('podcastIdentifierType', itemIndex) as 'uuid' | 'name' | 'itunesId' | 'rssUrl';
 	const identifier = this.getNodeParameter('podcastIdentifier', itemIndex) as string;
+	const responseFields = this.getNodeParameter('podcastResponseFields', itemIndex) as string[];
+	const includeEpisodes = this.getNodeParameter('podcastIncludeEpisodes', itemIndex) as boolean;
+	const episodeFields = includeEpisodes ? this.getNodeParameter('podcastEpisodeFields', itemIndex) as string[] : ['uuid', 'name', 'description'];
 
 	if (!identifier) {
 		throw new NodeOperationError(this.getNode(), 'Podcast identifier is required', {
@@ -225,7 +229,8 @@ async function executeGetPodcastDetails(this: IExecuteFunctions, itemIndex: numb
 	}
 
 	// Build and execute query
-	const query = buildGetPodcastSeriesQuery(identifier, identifierType);
+	const includeGenres = responseFields.includes('genres');
+	const query = buildGetPodcastSeriesQuery(identifier, identifierType, responseFields, includeGenres, includeEpisodes, episodeFields);
 	const data = await executeGraphQLQuery(this, query);
 
 	// Process and return result
@@ -235,6 +240,9 @@ async function executeGetPodcastDetails(this: IExecuteFunctions, itemIndex: numb
 async function executeGetEpisodeDetails(this: IExecuteFunctions, itemIndex: number): Promise<any> {
 	const identifierType = this.getNodeParameter('episodeIdentifierType', itemIndex) as 'uuid' | 'guid' | 'name';
 	const identifier = this.getNodeParameter('episodeIdentifier', itemIndex) as string;
+	const responseFields = this.getNodeParameter('episodeResponseFields', itemIndex) as string[];
+	const includeTranscript = this.getNodeParameter('episodeIncludeTranscript', itemIndex) as boolean;
+	const includeChapters = this.getNodeParameter('episodeIncludeChapters', itemIndex) as boolean;
 
 	if (!identifier) {
 		throw new NodeOperationError(this.getNode(), 'Episode identifier is required', {
@@ -250,7 +258,7 @@ async function executeGetEpisodeDetails(this: IExecuteFunctions, itemIndex: numb
 	}
 
 	// Build and execute query
-	const query = buildGetEpisodeQuery(identifier, identifierType);
+	const query = buildGetEpisodeQuery(identifier, identifierType, responseFields, includeTranscript, includeChapters);
 	const data = await executeGraphQLQuery(this, query);
 
 	// Process and return result
@@ -290,6 +298,7 @@ async function executeGetPopularContent(this: IExecuteFunctions, itemIndex: numb
 
 async function executeGetLatestEpisodes(this: IExecuteFunctions, itemIndex: number): Promise<any[]> {
 	const uuidsString = this.getNodeParameter('latestPodcastUuids', itemIndex) as string;
+	const responseFields = this.getNodeParameter('latestResponseFields', itemIndex) as string[];
 	
 	if (!uuidsString) {
 		throw new NodeOperationError(this.getNode(), 'Podcast UUIDs are required', {
@@ -309,7 +318,7 @@ async function executeGetLatestEpisodes(this: IExecuteFunctions, itemIndex: numb
 	}
 
 	// Build and execute query
-	const query = buildGetLatestEpisodesQuery(podcastUuids);
+	const query = buildGetLatestEpisodesQuery(podcastUuids, responseFields);
 	const data = await executeGraphQLQuery(this, query);
 
 	// Process and return results
@@ -798,16 +807,6 @@ export class TaddyApi implements INodeType {
 						description: 'Episode number (episodes only)',
 					},
 					{
-						name: 'Has Chapters',
-						value: 'hasChapters',
-						description: 'Whether chapters are available (episodes only)',
-					},
-					{
-						name: 'Has Transcript',
-						value: 'hasTranscript',
-						description: 'Whether transcript is available',
-					},
-					{
 						name: 'Image URL',
 						value: 'imageUrl',
 						description: 'Cover art or image URL',
@@ -864,7 +863,7 @@ export class TaddyApi implements INodeType {
 					},
 					{
 						name: 'Web URL',
-						value: 'webUrl',
+						value: 'websiteUrl',
 						description: 'Web page URL (episodes only)',
 					},
 					{
@@ -1076,6 +1075,71 @@ export class TaddyApi implements INodeType {
 				placeholder: 'Enter UUID, name, iTunes ID, or RSS URL',
 				description: 'The identifier value for the podcast',
 			},
+			{
+				displayName: 'Response Fields',
+				name: 'podcastResponseFields',
+				type: 'multiOptions',
+				displayOptions: {
+					show: {
+						resource: ['podcast'],
+						operation: ['getDetails'],
+					},
+				},
+				options: [
+					{ name: 'Countries', value: 'countries' },
+					{ name: 'Description', value: 'description' },
+					{ name: 'Genres', value: 'genres' },
+					{ name: 'Image URL', value: 'imageUrl' },
+					{ name: 'iTunes ID', value: 'itunesId' },
+					{ name: 'Language', value: 'language' },
+					{ name: 'Name', value: 'name' },
+					{ name: 'Popularity Rank', value: 'popularityRank' },
+					{ name: 'RSS URL', value: 'rssUrl' },
+					{ name: 'Total Episode Count', value: 'totalEpisodeCount' },
+					{ name: 'UUID', value: 'uuid' },
+					{ name: 'Website URL', value: 'websiteUrl' },
+				],
+				default: ['uuid', 'name', 'description'],
+				description: 'Select which fields to include in the response',
+			},
+			{
+				displayName: 'Include Episodes',
+				name: 'podcastIncludeEpisodes',
+				type: 'boolean',
+				displayOptions: {
+					show: {
+						resource: ['podcast'],
+						operation: ['getDetails'],
+					},
+				},
+				default: false,
+				description: 'Whether to include episodes in the response',
+			},
+			{
+				displayName: 'Episode Fields',
+				name: 'podcastEpisodeFields',
+				type: 'multiOptions',
+				displayOptions: {
+					show: {
+						resource: ['podcast'],
+						operation: ['getDetails'],
+						podcastIncludeEpisodes: [true],
+					},
+				},
+				options: [
+					{ name: 'Audio URL', value: 'audioUrl' },
+					{ name: 'Date Published', value: 'datePublished' },
+					{ name: 'Description', value: 'description' },
+					{ name: 'Duration', value: 'duration' },
+					{ name: 'Episode Number', value: 'episodeNumber' },
+					{ name: 'Name', value: 'name' },
+					{ name: 'Season Number', value: 'seasonNumber' },
+					{ name: 'UUID', value: 'uuid' },
+					{ name: 'Website URL', value: 'websiteUrl' },
+				],
+				default: ['uuid', 'name', 'description'],
+				description: 'Select which episode fields to include',
+			},
 			// Episode Details Parameters
 			{
 				displayName: 'Identifier Type',
@@ -1118,6 +1182,60 @@ export class TaddyApi implements INodeType {
 				default: '',
 				placeholder: 'Enter UUID, GUID, or episode name',
 				description: 'The identifier value for the episode',
+			},
+			{
+				displayName: 'Response Fields',
+				name: 'episodeResponseFields',
+				type: 'multiOptions',
+				displayOptions: {
+					show: {
+						resource: ['episode'],
+						operation: ['getDetails'],
+					},
+				},
+				options: [
+					{ name: 'Audio URL', value: 'audioUrl' },
+					{ name: 'Date Published', value: 'datePublished' },
+					{ name: 'Description', value: 'description' },
+					{ name: 'Duration', value: 'duration' },
+					{ name: 'Episode Number', value: 'episodeNumber' },
+					{ name: 'iTunes ID', value: 'itunesId' },
+					{ name: 'Name', value: 'name' },
+					{ name: 'Podcast Description', value: 'podcastDescription' },
+					{ name: 'Podcast Image URL', value: 'podcastImageUrl' },
+					{ name: 'RSS URL', value: 'rssUrl' },
+					{ name: 'Season Number', value: 'seasonNumber' },
+					{ name: 'UUID', value: 'uuid' },
+					{ name: 'Website URL', value: 'websiteUrl' },
+				],
+				default: ['uuid', 'name', 'description'],
+				description: 'Select which fields to include in the response',
+			},
+			{
+				displayName: 'Include Transcript',
+				name: 'episodeIncludeTranscript',
+				type: 'boolean',
+				displayOptions: {
+					show: {
+						resource: ['episode'],
+						operation: ['getDetails'],
+					},
+				},
+				default: false,
+				description: 'Whether to include episode transcript data',
+			},
+			{
+				displayName: 'Include Chapters',
+				name: 'episodeIncludeChapters',
+				type: 'boolean',
+				displayOptions: {
+					show: {
+						resource: ['episode'],
+						operation: ['getDetails'],
+					},
+				},
+				default: false,
+				description: 'Whether to include episode chapter data',
 			},
 			// Popular Content Parameters
 			{
@@ -1368,6 +1486,32 @@ export class TaddyApi implements INodeType {
 				default: '',
 				placeholder: 'uuid1,uuid2,uuid3',
 				description: 'Comma-separated list of podcast UUIDs to get latest episodes from',
+			},
+			{
+				displayName: 'Response Fields',
+				name: 'latestResponseFields',
+				type: 'multiOptions',
+				displayOptions: {
+					show: {
+						resource: ['latest'],
+						operation: ['getLatest'],
+					},
+				},
+				options: [
+					{ name: 'Audio URL', value: 'audioUrl' },
+					{ name: 'Date Published', value: 'datePublished' },
+					{ name: 'Description', value: 'description' },
+					{ name: 'Duration', value: 'duration' },
+					{ name: 'Episode Number', value: 'episodeNumber' },
+					{ name: 'Name', value: 'name' },
+					{ name: 'Podcast Description', value: 'podcastDescription' },
+					{ name: 'Podcast Image URL', value: 'podcastImageUrl' },
+					{ name: 'Season Number', value: 'seasonNumber' },
+					{ name: 'UUID', value: 'uuid' },
+					{ name: 'Website URL', value: 'websiteUrl' },
+				],
+				default: ['uuid', 'name', 'description'],
+				description: 'Select which fields to include in the response',
 			},
 			// Transcript Parameters
 			{

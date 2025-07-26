@@ -111,7 +111,7 @@ export function processPodcastSeriesResult(data: any): ProcessedResult {
 }
 
 export function processEpisodeResult(data: any): ProcessedResult {
-	const episode = data.getEpisode;
+	const episode = data.getPodcastEpisode;
 	
 	if (!episode) {
 		throw new Error('Episode not found');
@@ -174,17 +174,18 @@ export function processLatestEpisodesResults(data: any): ProcessedResult[] {
 	return results;
 }
 
-export function processTranscriptResult(data: any): any {
-	const transcript = data.getEpisodeTranscript;
+export function processTranscriptResult(data: any): any[] {
+	const transcriptItems = data.getEpisodeTranscript;
 	
-	if (!transcript) {
+	if (!transcriptItems || !Array.isArray(transcriptItems)) {
 		throw new Error('Transcript not found or not available');
 	}
 	
-	return {
-		type: 'transcript',
-		...transcript,
-	};
+	// getEpisodeTranscript returns an array of transcript items
+	return transcriptItems.map((item: any) => ({
+		type: 'transcript_item',
+		...item,
+	}));
 }
 
 export function processTopChartsResults(data: any, operation: 'country' | 'genres'): ProcessedResult[] {
