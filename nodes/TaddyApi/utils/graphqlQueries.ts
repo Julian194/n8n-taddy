@@ -291,7 +291,7 @@ export function buildGetEpisodeQuery(identifier: string, identifierType: 'uuid' 
 	`;
 }
 
-export function buildGetPopularContentQuery(language?: string, genre?: string, page = 1, limitPerPage = 10): string {
+export function buildGetPopularContentQuery(language?: string, genres?: string[], page = 1, limitPerPage = 10, responseFields: string[] = ['uuid', 'name', 'description']): string {
 	const args: string[] = [];
 	
 	if (language) {
@@ -300,9 +300,9 @@ export function buildGetPopularContentQuery(language?: string, genre?: string, p
 		args.push(`filterByLanguage: ${languageEnum}`);
 	}
 	
-	if (genre) {
-		// Genre is already in full enum format (e.g., "PODCASTSERIES_TECHNOLOGY")
-		args.push(`filterByGenres: [${genre}]`);
+	if (genres && genres.length > 0) {
+		// Genres are already in full enum format (e.g., "PODCASTSERIES_TECHNOLOGY")
+		args.push(`filterByGenres: [${genres.join(', ')}]`);
 	}
 	
 	// Add pagination - API supports page parameter
@@ -317,20 +317,16 @@ export function buildGetPopularContentQuery(language?: string, genre?: string, p
 	
 	const argsString = args.length > 0 ? `(${args.join(', ')})` : '';
 	
+	// Ensure uuid is always included
+	const fieldsToInclude = [...new Set(['uuid', ...responseFields])];
+	const fieldSelection = fieldsToInclude.join('\n\t\t\t\t\t');
+	
 	return `
 		query {
 			getPopularContent${argsString} {
 				popularityRankId
 				podcastSeries {
-					uuid
-					name
-					description
-					imageUrl
-					itunesId
-					rssUrl
-					language
-					popularityRank
-					totalEpisodesCount
+					${fieldSelection}
 				}
 			}
 		}
@@ -384,6 +380,83 @@ export function buildGetEpisodeTranscriptQuery(uuid: string, useOnDemandCredits 
 					endTime
 					text
 					speaker
+				}
+			}
+		}
+	`;
+}
+
+export function buildGetTopChartsByCountryQuery(
+	contentType: 'PODCASTSERIES' | 'PODCASTEPISODE',
+	country: string,
+	source = 'APPLE_PODCASTS',
+	page = 1,
+	limitPerPage = 10
+): string {
+	const args = [
+		`taddyType: ${contentType}`,
+		`country: ${country}`,
+		`source: ${source}`,
+		`page: ${page}`,
+		`limitPerPage: ${limitPerPage}`
+	];
+
+	return `
+		query {
+			getTopChartsByCountry(${args.join(', ')}) {
+				topChartsId
+				podcastSeries {
+					uuid
+					name
+				}
+				podcastEpisodes {
+					uuid
+					name
+					podcastSeries {
+						uuid
+						name
+					}
+				}
+			}
+		}
+	`;
+}
+
+export function buildGetTopChartsByGenresQuery(
+	contentType: 'PODCASTSERIES' | 'PODCASTEPISODE',
+	genres: string[],
+	source = 'APPLE_PODCASTS',
+	filterByCountry?: string,
+	page = 1,
+	limitPerPage = 10
+): string {
+	const args = [
+		`taddyType: ${contentType}`,
+		`genres: [${genres.join(', ')}]`,
+		`source: ${source}`,
+		`page: ${page}`,
+		`limitPerPage: ${limitPerPage}`
+	];
+
+	if (filterByCountry) {
+		args.push(`filterByCountry: ${filterByCountry}`);
+	}
+
+	return `
+		query {
+			getTopChartsByGenres(${args.join(', ')}) {
+				topChartsId
+				podcastSeries {
+					uuid
+					name
+				}
+				podcastEpisodes {
+					uuid
+					name
+					podcastSeries {
+						uuid
+						name
+					}
 				}
 			}
 		}

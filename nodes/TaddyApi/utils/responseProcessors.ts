@@ -192,6 +192,45 @@ export function processTranscriptResult(data: any): any {
 	};
 }
 
+export function processTopChartsResults(data: any, operation: 'country' | 'genres'): ProcessedResult[] {
+	const results: ProcessedResult[] = [];
+	const topChartsData = operation === 'country' ? data.getTopChartsByCountry : data.getTopChartsByGenres;
+	
+	if (!topChartsData) return results;
+	
+	const metadata = {
+		topChartsId: topChartsData.topChartsId,
+	};
+	
+	// Process podcast series from top charts
+	if (topChartsData.podcastSeries) {
+		topChartsData.podcastSeries.forEach((podcast: any) => {
+			results.push({
+				type: 'podcast',
+				uuid: podcast.uuid,
+				name: podcast.name,
+				metadata,
+				...podcast,
+			});
+		});
+	}
+	
+	// Process podcast episodes from top charts
+	if (topChartsData.podcastEpisodes) {
+		topChartsData.podcastEpisodes.forEach((episode: any) => {
+			results.push({
+				type: 'episode',
+				uuid: episode.uuid,
+				name: episode.name,
+				metadata,
+				...episode,
+			});
+		});
+	}
+	
+	return results;
+}
+
 export function processGraphQLError(error: any): string {
 	if (error.response?.data?.errors) {
 		const graphqlErrors = error.response.data.errors;
