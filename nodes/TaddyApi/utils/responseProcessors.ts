@@ -1,23 +1,16 @@
-export interface ProcessedResult {
-	type: 'podcast' | 'episode' | 'comic' | 'creator';
-	uuid: string;
-	name: string;
-	description?: string;
-	searchId?: string;
-	ranking?: {
-		score: number;
-		relevance: string;
-	};
-	metadata?: {
-		totalCount: number;
-		pagesCount: number;
-		id: string;
-	};
-	// Type-specific fields will be preserved as-is
-	[key: string]: any;
-}
+import { 
+	ProcessedResult, 
+	SearchMetadata, 
+	PodcastResult, 
+	EpisodeResult, 
+	ComicResult, 
+	CreatorResult, 
+	TranscriptItem,
+	PopularContentResult,
+	TopChartsResult 
+} from '../types/resultTypes';
 
-export function processSearchResults(data: any): any[] {
+export function processSearchResults(data: any): ProcessedResult[] {
 	const searchData = data.search;
 	
 	if (!searchData) return [];
@@ -31,70 +24,53 @@ export function processSearchResults(data: any): any[] {
 		pagesCount: responseDetails?.pagesCount,
 	};
 	
-	const results: any[] = [];
+	const results: ProcessedResult[] = [];
 	
-	// Add metadata as the first item for easy access
 	results.push({
 		_type: 'search_metadata',
 		...searchMetadata,
-	});
+	} as SearchMetadata);
 	
-	// Process podcast series
 	if (searchData.podcastSeries) {
 		searchData.podcastSeries.forEach((podcast: any) => {
 			results.push({
 				type: 'podcast',
-				uuid: podcast.uuid,
-				name: podcast.name,
-				description: podcast.description,
 				...podcast,
-			});
+			} as PodcastResult);
 		});
 	}
 	
-	// Process podcast episodes
 	if (searchData.podcastEpisodes) {
 		searchData.podcastEpisodes.forEach((episode: any) => {
 			results.push({
 				type: 'episode',
-				uuid: episode.uuid,
-				name: episode.name,
-				description: episode.description,
 				...episode,
-			});
+			} as EpisodeResult);
 		});
 	}
 	
-	// Process comic series
 	if (searchData.comicSeries) {
 		searchData.comicSeries.forEach((comic: any) => {
 			results.push({
 				type: 'comic',
-				uuid: comic.uuid,
-				name: comic.name,
-				description: comic.description,
 				...comic,
-			});
+			} as ComicResult);
 		});
 	}
 	
-	// Process creators
 	if (searchData.creators) {
 		searchData.creators.forEach((creator: any) => {
 			results.push({
 				type: 'creator',
-				uuid: creator.uuid,
-				name: creator.name,
-				description: creator.description,
 				...creator,
-			});
+			} as CreatorResult);
 		});
 	}
 	
 	return results;
 }
 
-export function processPodcastSeriesResult(data: any): ProcessedResult {
+export function processPodcastSeriesResult(data: any): PodcastResult {
 	const podcast = data.getPodcastSeries;
 	
 	if (!podcast) {
@@ -103,14 +79,11 @@ export function processPodcastSeriesResult(data: any): ProcessedResult {
 	
 	return {
 		type: 'podcast',
-		uuid: podcast.uuid,
-		name: podcast.name,
-		description: podcast.description,
 		...podcast,
-	};
+	} as PodcastResult;
 }
 
-export function processEpisodeResult(data: any): ProcessedResult {
+export function processEpisodeResult(data: any): EpisodeResult {
 	const episode = data.getPodcastEpisode;
 	
 	if (!episode) {
@@ -119,15 +92,12 @@ export function processEpisodeResult(data: any): ProcessedResult {
 	
 	return {
 		type: 'episode',
-		uuid: episode.uuid,
-		name: episode.name,
-		description: episode.description,
 		...episode,
-	};
+	} as EpisodeResult;
 }
 
-export function processPopularContentResults(data: any): ProcessedResult[] {
-	const results: ProcessedResult[] = [];
+export function processPopularContentResults(data: any): PopularContentResult[] {
+	const results: PopularContentResult[] = [];
 	const popularData = data.getPopularContent;
 	
 	if (!popularData) return results;
@@ -140,56 +110,48 @@ export function processPopularContentResults(data: any): ProcessedResult[] {
 		popularData.podcastSeries.forEach((podcast: any) => {
 			results.push({
 				type: 'podcast',
-				uuid: podcast.uuid,
-				name: podcast.name,
-				description: podcast.description,
 				metadata,
 				...podcast,
-			});
+			} as PopularContentResult);
 		});
 	}
 	
 	return results;
 }
 
-export function processLatestEpisodesResults(data: any): ProcessedResult[] {
-	const results: ProcessedResult[] = [];
+export function processLatestEpisodesResults(data: any): EpisodeResult[] {
+	const results: EpisodeResult[] = [];
 	const latestData = data.getLatestPodcastEpisodes;
 	
 	if (!latestData) return results;
 	
-	// getLatestPodcastEpisodes returns episodes directly as an array
 	if (Array.isArray(latestData)) {
 		latestData.forEach((episode: any) => {
 			results.push({
 				type: 'episode',
-				uuid: episode.uuid,
-				name: episode.name,
-				description: episode.description,
 				...episode,
-			});
+			} as EpisodeResult);
 		});
 	}
 	
 	return results;
 }
 
-export function processTranscriptResult(data: any): any[] {
+export function processTranscriptResult(data: any): TranscriptItem[] {
 	const transcriptItems = data.getEpisodeTranscript;
 	
 	if (!transcriptItems || !Array.isArray(transcriptItems)) {
 		throw new Error('Transcript not found or not available');
 	}
 	
-	// getEpisodeTranscript returns an array of transcript items
 	return transcriptItems.map((item: any) => ({
 		type: 'transcript_item',
 		...item,
-	}));
+	} as TranscriptItem));
 }
 
-export function processTopChartsResults(data: any, operation: 'country' | 'genres'): ProcessedResult[] {
-	const results: ProcessedResult[] = [];
+export function processTopChartsResults(data: any, operation: 'country' | 'genres'): TopChartsResult[] {
+	const results: TopChartsResult[] = [];
 	const topChartsData = operation === 'country' ? data.getTopChartsByCountry : data.getTopChartsByGenres;
 	
 	if (!topChartsData) return results;
@@ -198,29 +160,23 @@ export function processTopChartsResults(data: any, operation: 'country' | 'genre
 		topChartsId: topChartsData.topChartsId,
 	};
 	
-	// Process podcast series from top charts
 	if (topChartsData.podcastSeries) {
 		topChartsData.podcastSeries.forEach((podcast: any) => {
 			results.push({
 				type: 'podcast',
-				uuid: podcast.uuid,
-				name: podcast.name,
 				metadata,
 				...podcast,
-			});
+			} as TopChartsResult);
 		});
 	}
 	
-	// Process podcast episodes from top charts
 	if (topChartsData.podcastEpisodes) {
 		topChartsData.podcastEpisodes.forEach((episode: any) => {
 			results.push({
 				type: 'episode',
-				uuid: episode.uuid,
-				name: episode.name,
 				metadata,
 				...episode,
-			});
+			} as TopChartsResult);
 		});
 	}
 	
