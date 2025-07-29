@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-taddy",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "n8n node to interact with Taddy Podcast API - Search 4M+ podcasts and 180M+ episodes",
   "keywords": [
     "n8n-community-node-package"
