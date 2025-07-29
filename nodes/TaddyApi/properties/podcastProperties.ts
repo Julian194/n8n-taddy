@@ -3,10 +3,10 @@ import { createOperationProperty, createResponseFieldsProperty, PODCAST_FIELD_OP
 
 const podcastOperationPropertyBase = createOperationProperty('podcast', [
 	{
-		name: 'Get Details',
+		name: 'Get',
 		value: 'getDetails',
 		description: 'Get detailed information about a specific podcast',
-		action: 'Get podcast details',
+		action: 'Get a podcast',
 	},
 ]);
 

@@ -3,7 +3,7 @@ import { createOperationProperty, createResponseFieldsProperty, EPISODE_FIELD_OP
 
 const latestOperationPropertyBase = createOperationProperty('latest', [
 	{
-		name: 'Get Latest',
+		name: 'Get',
 		value: 'getLatest',
 		description: 'Get latest episodes from multiple podcasts',
 		action: 'Get latest episodes',

@@ -5,13 +5,13 @@ import { COUNTRIES } from '../utils/countryOptions';
 
 const topChartsOperationPropertyBase = createOperationProperty('topCharts', [
 	{
-		name: 'Get Top Charts by Country',
+		name: 'Get by Country',
 		value: 'getByCountry',
 		description: 'Get Apple Podcasts top charts by country',
 		action: 'Get top charts by country',
 	},
 	{
-		name: 'Get Top Charts by Genre',
+		name: 'Get by Genre',
 		value: 'getByGenres',
 		description: 'Get Apple Podcasts top charts by genre',
 		action: 'Get top charts by genre',

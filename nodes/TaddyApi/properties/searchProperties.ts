@@ -3,10 +3,10 @@ import { createOperationProperty, createPaginationProperties, createResponseFiel
 
 const searchOperationPropertyBase = createOperationProperty('search', [
 	{
-		name: 'Search Content',
+		name: 'Search',
 		value: 'searchContent',
 		description: 'Search across podcasts, episodes, comics, and creators',
-		action: 'Search for content',
+		action: 'Search podcasts and episodes',
 	},
 ]);
 

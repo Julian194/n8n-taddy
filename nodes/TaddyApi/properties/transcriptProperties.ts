@@ -3,10 +3,10 @@ import { createOperationProperty } from './baseProperties';
 
 const transcriptOperationPropertyBase = createOperationProperty('transcript', [
 	{
-		name: 'Get Transcript',
+		name: 'Get',
 		value: 'getTranscript',
 		description: 'Get transcript for a specific episode',
-		action: 'Get episode transcript',
+		action: 'Get a transcript',
 	},
 ]);
 

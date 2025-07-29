@@ -4,10 +4,10 @@ import { PODCAST_GENRES } from '../utils/genreOptions';
 
 const popularOperationPropertyBase = createOperationProperty('popular', [
 	{
-		name: 'Get Popular',
+		name: 'Get',
 		value: 'getPopular',
 		description: 'Get popular/trending podcasts',
-		action: 'Get popular content',
+		action: 'Get popular podcasts',
 	},
 ]);
 
