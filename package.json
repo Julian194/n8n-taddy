@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-taddy",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "n8n node to interact with Taddy Podcast API - Search 4M+ podcasts and 180M+ episodes",
   "keywords": [
     "n8n-community-node-package"
@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/kaiserlich/n8n-taddy.git"
+    "url": "https://github.com/Julian194/n8n-taddy"
   },
   "engines": {
     "node": ">=20.15"

@@ -119,6 +119,9 @@ This node follows n8n community node standards and should be compatible with all
 ## Version History
 
 
+### 0.1.2 (2025-07-29)
+- Repository Url fixed
+
 ### 0.1.1 (2025-07-29)
 - n8n guidelines checklist
 ### 0.1.0 (Initial Release)
