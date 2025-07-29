@@ -45,7 +45,6 @@ export function createOperationProperty(resource: string, operations: Array<{nam
 		name: 'operation',
 		type: 'options',
 		default: '',
-		default: operations.length > 0 ? operations[0].value : '',
 		noDataExpression: true,
 		displayOptions: {
 			show: {

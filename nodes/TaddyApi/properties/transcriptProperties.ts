@@ -1,7 +1,7 @@
 import { INodeProperties } from 'n8n-workflow';
 import { createOperationProperty } from './baseProperties';
 
-export const transcriptOperationProperty = createOperationProperty('transcript', [
+const transcriptOperationPropertyBase = createOperationProperty('transcript', [
 	{
 		name: 'Get Transcript',
 		value: 'getTranscript',
@@ -9,6 +9,11 @@ export const transcriptOperationProperty = createOperationProperty('transcript',
 		action: 'Get episode transcript',
 	},
 ]);
+
+export const transcriptOperationProperty = {
+	...transcriptOperationPropertyBase,
+	default: 'getTranscript',
+};
 
 export const transcriptProperties: INodeProperties[] = [
 	{

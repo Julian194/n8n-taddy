@@ -2,7 +2,7 @@ import { INodeProperties } from 'n8n-workflow';
 import { createOperationProperty, createPaginationProperties, createResponseFieldsProperty, PODCAST_FIELD_OPTIONS } from './baseProperties';
 import { PODCAST_GENRES } from '../utils/genreOptions';
 
-export const popularOperationProperty = createOperationProperty('popular', [
+const popularOperationPropertyBase = createOperationProperty('popular', [
 	{
 		name: 'Get Popular',
 		value: 'getPopular',
@@ -10,6 +10,11 @@ export const popularOperationProperty = createOperationProperty('popular', [
 		action: 'Get popular content',
 	},
 ]);
+
+export const popularOperationProperty = {
+	...popularOperationPropertyBase,
+	default: 'getPopular',
+};
 
 export const popularProperties: INodeProperties[] = [
 	{

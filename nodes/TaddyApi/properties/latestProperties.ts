@@ -1,7 +1,7 @@
 import { INodeProperties } from 'n8n-workflow';
 import { createOperationProperty, createResponseFieldsProperty, EPISODE_FIELD_OPTIONS } from './baseProperties';
 
-export const latestOperationProperty = createOperationProperty('latest', [
+const latestOperationPropertyBase = createOperationProperty('latest', [
 	{
 		name: 'Get Latest',
 		value: 'getLatest',
@@ -9,6 +9,11 @@ export const latestOperationProperty = createOperationProperty('latest', [
 		action: 'Get latest episodes',
 	},
 ]);
+
+export const latestOperationProperty = {
+	...latestOperationPropertyBase,
+	default: 'getLatest',
+};
 
 export const latestProperties: INodeProperties[] = [
 	{

@@ -1,7 +1,7 @@
 import { INodeProperties } from 'n8n-workflow';
 import { createOperationProperty, createResponseFieldsProperty, PODCAST_FIELD_OPTIONS, EPISODE_FIELD_OPTIONS } from './baseProperties';
 
-export const podcastOperationProperty = createOperationProperty('podcast', [
+const podcastOperationPropertyBase = createOperationProperty('podcast', [
 	{
 		name: 'Get Details',
 		value: 'getDetails',
@@ -9,6 +9,11 @@ export const podcastOperationProperty = createOperationProperty('podcast', [
 		action: 'Get podcast details',
 	},
 ]);
+
+export const podcastOperationProperty = {
+	...podcastOperationPropertyBase,
+	default: 'getDetails',
+};
 
 export const podcastProperties: INodeProperties[] = [
 	{

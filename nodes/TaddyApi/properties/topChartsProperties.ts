@@ -3,7 +3,7 @@ import { createOperationProperty, createPaginationProperties } from './basePrope
 import { PODCAST_GENRES } from '../utils/genreOptions';
 import { COUNTRIES } from '../utils/countryOptions';
 
-export const topChartsOperationProperty = createOperationProperty('topCharts', [
+const topChartsOperationPropertyBase = createOperationProperty('topCharts', [
 	{
 		name: 'Get Top Charts by Country',
 		value: 'getByCountry',
@@ -17,6 +17,11 @@ export const topChartsOperationProperty = createOperationProperty('topCharts', [
 		action: 'Get top charts by genre',
 	},
 ]);
+
+export const topChartsOperationProperty = {
+	...topChartsOperationPropertyBase,
+	default: 'getByCountry',
+};
 
 export const topChartsProperties: INodeProperties[] = [
 	{

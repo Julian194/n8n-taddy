@@ -1,7 +1,7 @@
 import { INodeProperties } from 'n8n-workflow';
 import { createOperationProperty, createPaginationProperties, createResponseFieldsProperty, COMMON_FIELD_OPTIONS, EPISODE_FIELD_OPTIONS } from './baseProperties';
 
-export const searchOperationProperty = createOperationProperty('search', [
+const searchOperationPropertyBase = createOperationProperty('search', [
 	{
 		name: 'Search Content',
 		value: 'searchContent',
@@ -9,6 +9,11 @@ export const searchOperationProperty = createOperationProperty('search', [
 		action: 'Search for content',
 	},
 ]);
+
+export const searchOperationProperty = {
+	...searchOperationPropertyBase,
+	default: 'searchContent',
+};
 
 export const searchProperties: INodeProperties[] = [
 	{
