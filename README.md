@@ -50,6 +50,11 @@ Community package name: `n8n-nodes-taddy`
 - Retrieve episode transcripts in multiple formats (text, SRT, VTT, JSON)
 - Support for on-demand transcript generation
 
+### Top Charts
+- Get Apple Podcasts top charts by country with filtering options
+- Get top charts by genre with optional country filtering
+- Support for both podcast series and episode content types
+
 ## Credentials
 
 To use this node, you need to authenticate with the Taddy API:
@@ -102,6 +107,7 @@ This node follows n8n community node standards and should be compatible with all
 - **Content Discovery**: Search → Filter → Extract podcast information for subscriptions
 - **Content Analysis**: Search with transcripts → Get transcript → Analyze content
 - **Monitoring**: Search for specific topics → Check for new episodes → Send notifications
+- **Trend Analysis**: Get top charts by country/genre → Track popular podcast trends
 
 ## Resources
 
@@ -113,11 +119,12 @@ This node follows n8n community node standards and should be compatible with all
 ## Version History
 
 ### 0.1.0 (Initial Release)
-- Full Taddy API integration with 6 resource types
+- Full Taddy API integration with 7 resource types
 - Advanced search with field selection and filtering
 - Podcast and episode detail operations
 - Popular content discovery
 - Latest episodes retrieval
 - Transcript access with multiple formats
+- Top charts by country and genre
 - Comprehensive error handling and validation
 - Production-ready with extensive testing coverage
